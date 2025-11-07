@@ -268,10 +268,13 @@ _tradeable_both = compare_tradeable(_tradeable_Roostoo, _coins_Horus)
 
 # --- strategy ---
 
-ALL_ASSETS = _tradeable_both
+ALL_ASSETS = [
+ 'BTC','ETH','BNB','SOL','ADA','AVAX','DOT','LINK',
+ 'XRP','LTC','DOGE','TRX','FET','ARB','SUI'
+]
 
 QUOTE = "USD"
-BATCH_SIZE = 12                 # 36 -> 3 batches of 12
+BATCH_SIZE = 5                 # 36 -> 3 batches of 12
 INTERVAL = "15m"                # {"15m": 900, "1h": 3600, "1d": 86400}
 RUN_OFFSET_SEC = 60             # run ~60s after candle close (safe)
 POLLING_SEC = 30                # check loop cadence (don’t set < 10s)
@@ -280,7 +283,7 @@ POLLING_SEC = 30                # check loop cadence (don’t set < 10s)
 SMA_FAST = 20
 SMA_SLOW = 50
 BARS_NEEDED = max(SMA_FAST, SMA_SLOW) + 10
-API_COOLDOWN_SEC = 1.5
+API_COOLDOWN_SEC = 0.5
 
 FEE_RATE = 0.001               # 0.1%
 SLIPPAGE_BPS = 5               # 0.05% for safety checks
