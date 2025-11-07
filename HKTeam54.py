@@ -276,7 +276,7 @@ ALL_ASSETS = [
 QUOTE = "USD"
 BATCH_SIZE = 5                 # 36 -> 3 batches of 12
 INTERVAL = "15m"                # {"15m": 900, "1h": 3600, "1d": 86400}
-RUN_OFFSET_SEC = 60             # run ~60s after candle close (safe)
+RUN_OFFSET_SEC = 60             # run ~60s after candle close (rate limit)
 POLLING_SEC = 30                # check loop cadence (don’t set < 10s)
 
 # Trading params
@@ -295,9 +295,6 @@ USE_MARKET_ORDERS = True       # False -> limit-at-best
 # State persistence
 STATE_PATH = "./runner_state.json"
 
-# ===========================
-# INTERNALS
-# ===========================
 _INTERVAL_SECONDS = {"15m": 900, "1h": 3600, "1d": 86400}[INTERVAL]
 _shutdown = False
 
@@ -546,13 +543,11 @@ def _next_run_time(after_sec=RUN_OFFSET_SEC):
     return next_close + after_sec
 
 def run_once_for_batch(batch_assets, state, batch_index):
-    # Health checks
     srv = _with_backoff(check_server_time); _sleep_brief()
     ex = _with_backoff(get_exchange_info); _sleep_brief()
     if not ex or ex.get("IsRunning") is not True:
         return {"Success": False, "ErrMsg": "Exchange not running", "batch_index": batch_index}
 
-    # Only act if we have a fresh bar in this batch
     if not should_run_this_cycle(batch_assets, state):
         return {
             "Success": True, "Skipped": True, "Reason": "No new candle for batch",
@@ -600,8 +595,6 @@ def main():
 
     while not _shutdown:
         now = time.time()
-
-        # If we're near/after the target window, process one batch
         if now >= next_target:
             batch_assets = batches[batch_index]
             _log(f"Running batch {batch_index}/{num_batches-1}: {batch_assets}")
@@ -612,17 +605,13 @@ def main():
                 _log("ERROR during batch run:", e)
                 out = {"Success": False, "ErrMsg": str(e)}
 
-            # Rotate batch regardless; the should_run() gate prevents duplicate work
             batch_index = (batch_index + 1) % num_batches
 
-            # Persist state (last bars + next batch index)
             state["batch_index"] = batch_index
             _save_state(state)
 
-            # Schedule the next target at the *next* candle close + offset
             next_target = _next_run_time()
 
-        # Sleep lightly between checks
         time.sleep(POLLING_SEC)
 
     _log("Runner stopped.")
