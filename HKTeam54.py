@@ -589,8 +589,9 @@ def main():
     batches = _batches_from_assets(ALL_ASSETS, BATCH_SIZE)
     num_batches = len(batches)
     batch_index = int(state.get("batch_index", 0)) % num_batches
-
-    _log(f"Runner start | interval={INTERVAL} | batches={num_batches} x {BATCH_SIZE} | offset={RUN_OFFSET_SEC}s")
+    no_assets = len(ALL_ASSETS)
+    
+    _log(f"Runner start | interval={INTERVAL} | ALL_ASSETS = {no_assets} |batches={num_batches} x {BATCH_SIZE} | offset={RUN_OFFSET_SEC}s")
     next_target = _next_run_time()
 
     while not _shutdown:
