@@ -9,6 +9,7 @@ import math
 from datetime import datetime, timezone, timedelta
 import json, os, time, math
 import signal
+from typing import Optional
 
 try:
     base_path = Path(__file__).resolve().parent
@@ -31,10 +32,15 @@ def _get_timestamp():
     """Return a 13-digit millisecond timestamp as string."""
     return str(int(time.time() * 1000))
 
-def _get_signed_headers(payload: dict = {}):
+def _get_signed_headers(payload: Optional[dict] = None):
     """
     Generate signed headers and totalParams for RCL_TopLevelCheck endpoints.
     """
+    if payload is None:
+        payload = {}
+    else:
+        # Avoid mutating caller supplied payloads.
+        payload = dict(payload)
     payload['timestamp'] = _get_timestamp()
     sorted_keys = sorted(payload.keys())
     total_params = "&".join(f"{k}={payload[k]}" for k in sorted_keys)
@@ -240,18 +246,30 @@ def get_historical_price(asset="BTC", interval="1d", start=None, end=None, forma
 def get_all_tradeable_coins_Roostoo():
     '''all tradeable in Roostoo'''
     res = get_exchange_info()
-    _tradeable = list()
-    for i in res["TradePairs"]:
-        j = i.split("/")[0]
-        _tradeable.append(j)
-    return _tradeable
+    if not isinstance(res, dict):
+        return []
+
+    trade_pairs = res.get("TradePairs")
+    if not trade_pairs:
+        return []
+
+    if isinstance(trade_pairs, dict):
+        symbols = trade_pairs.keys()
+    else:
+        symbols = trade_pairs
+
+    tradeable = []
+    for pair in symbols:
+        if not isinstance(pair, str) or "/" not in pair:
+            continue
+        tradeable.append(pair.split("/")[0])
+    return tradeable
 
 def compare_tradeable(l, _coins_Horus):
-    _trade = list()
-    for i in l:
-        if i in _coins_Horus:
-            _trade.append(i)
-    return _trade
+    if not l:
+        return []
+    coin_set = set(_coins_Horus or [])
+    return [i for i in l if i in coin_set]
 
 # --- preparation ---
 
