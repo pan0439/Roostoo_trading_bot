@@ -26,7 +26,7 @@ Horus_api_key = os.getenv("Horus_API_KEY")
 HORUS_BASE_URL = "https://api-horus.com"
 BASE_URL = "https://mock-api.roostoo.com"
 
-# --- Roostoo ---
+# ---------- Roostoo ----------
 
 def _get_timestamp():
     """Return a 13-digit millisecond timestamp as string."""
@@ -39,7 +39,6 @@ def _get_signed_headers(payload: Optional[dict] = None):
     if payload is None:
         payload = {}
     else:
-        # Avoid mutating caller supplied payloads.
         payload = dict(payload)
     payload['timestamp'] = _get_timestamp()
     sorted_keys = sorted(payload.keys())
@@ -205,7 +204,7 @@ def cancel_order(order_id=None, pair=None):
         print(f"Response text: {e.response.text if e.response else 'N/A'}")
         return None
     
-# --- Horus ---
+# ---------- Horus data ----------
 
 def UTC_convert(l):
     '''
@@ -271,7 +270,7 @@ def compare_tradeable(l, _coins_Horus):
     coin_set = set(_coins_Horus or [])
     return [i for i in l if i in coin_set]
 
-# --- preparation ---
+# ---------- Preparation ----------
 
 _tradeable_Roostoo = get_all_tradeable_coins_Roostoo()
 _coins_Horus = [
@@ -284,7 +283,7 @@ _coins_Horus = [
     ]
 _tradeable_both = compare_tradeable(_tradeable_Roostoo, _coins_Horus)
 
-# --- strategy ---
+# ---------- Strategy ----------
 
 ALL_ASSETS = _tradeable_both
 
@@ -307,7 +306,6 @@ MIN_NOTIONAL_USD = 20
 MAX_PORTFOLIO_FRAC_PER_COIN = 1/3
 USE_MARKET_ORDERS = True       # False -> limit-at-best
 
-# State persistence
 STATE_PATH = "./runner_state.json"
 
 _INTERVAL_SECONDS = {"15m": 900, "1h": 3600, "1d": 86400}[INTERVAL]
